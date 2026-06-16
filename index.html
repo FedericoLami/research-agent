@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Research Agent — AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fafaf8;
+      --surface: #ffffff;
+      --surface-2: #f5f4f0;
+      --border: #e8e4dc;
+      --border-2: #d4cec4;
+      --ink: #1c1917;
+      --ink-2: #57534e;
+      --ink-3: #a8a29e;
+      --accent: #b45309;
+      --accent-light: #fef3c7;
+      --accent-2: #065f46;
+      --mono: 'DM Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+      --serif: 'Lora', serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 14px;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER */
+    header {
+      padding: 1rem 2.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-family: var(--serif);
+      font-size: 1.3rem;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .brand-meta {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--ink-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--accent-2);
+      letter-spacing: 0.06em;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-2);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* PROGRESS */
+    .progress {
+      height: 2px;
+      background: var(--border);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0;
+    }
+
+    .progress-fill.active {
+      animation: prog 1.8s ease-in-out infinite;
+    }
+
+    @keyframes prog {
+      0% { transform: translateX(-100%); width: 50%; }
+      100% { transform: translateX(250%); width: 50%; }
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* MAIN */
+    .main {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 100%;
+      border-right: 1px solid var(--border);
+    }
+
+    /* INPUT AREA */
+    .search-area {
+      padding: 2rem 2.5rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .search-label {
+      font-family: var(--serif);
+      font-size: 0.85rem;
+      color: var(--ink-2);
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .search-wrap { flex: 1; }
+
+    textarea#inputMsg {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      padding: 0.7rem 1rem;
+      resize: none;
+      height: 48px;
+      max-height: 120px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    textarea#inputMsg:focus { border-color: var(--accent); }
+    textarea#inputMsg::placeholder { color: var(--ink-3); }
+
+    .search-hint {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--ink-3);
+      margin-top: 0.35rem;
+      letter-spacing: 0.04em;
+    }
+
+    .btn-search {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0 1.25rem;
+      height: 48px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .btn-search:hover { opacity: 0.85; }
+    .btn-search:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* REPORT AREA */
+    .report-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem 2.5rem;
+      min-height: 0;
+    }
+
+    .empty-state {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 0.75rem;
+      color: var(--ink-3);
+    }
+
+    .empty-title {
+      font-family: var(--serif);
+      font-size: 1.4rem;
+      font-style: italic;
+      color: var(--ink-2);
+    }
+
+    .empty-sub {
+      font-size: 0.78rem;
+      max-width: 300px;
+      line-height: 1.7;
+    }
+
+    /* REPORT CONTENT */
+    .report-content {
+      display: none;
+    }
+
+    .report-content.visible { display: block; }
+
+    .report-header {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .report-topic {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--ink-3);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .report-title {
+      font-family: var(--serif);
+      font-size: 1.5rem;
+      color: var(--ink);
+      line-height: 1.3;
+    }
+
+    .report-body {
+      font-size: 0.88rem;
+      line-height: 1.85;
+      color: var(--ink-2);
+    }
+
+    .report-body h1 {
+      font-family: var(--serif);
+      font-size: 1.4rem;
+      color: var(--ink);
+      margin: 1.5rem 0 0.75rem;
+      line-height: 1.3;
+    }
+
+    .report-body h2 {
+      font-family: var(--serif);
+      font-size: 1.1rem;
+      color: var(--ink);
+      margin: 1.25rem 0 0.5rem;
+      font-style: italic;
+    }
+
+    .report-body h3 {
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin: 1rem 0 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .report-body p { margin-bottom: 0.85rem; }
+
+    .report-body ul, .report-body ol {
+      margin: 0.5rem 0 0.85rem 1.5rem;
+    }
+
+    .report-body li { margin-bottom: 0.3rem; }
+
+    .report-body strong {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .report-body em { color: var(--accent); }
+
+    .report-body hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5rem 0;
+    }
+
+    .report-body code {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      background: var(--surface-2);
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      color: var(--accent);
+    }
+
+    /* LOADING STATE */
+    .loading-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 1.25rem;
+    }
+
+    .loading-state.visible { display: flex; }
+
+    .loading-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-width: 260px;
+    }
+
+    .loading-step {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--ink-3);
+      transition: color 0.3s;
+    }
+
+    .loading-step.active { color: var(--ink); }
+    .loading-step.done { color: var(--accent-2); }
+
+    .step-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      flex-shrink: 0;
+      font-family: var(--mono);
+      color: var(--ink-3);
+      transition: all 0.3s;
+    }
+
+    .loading-step.active .step-icon {
+      border-color: var(--accent);
+      color: var(--accent);
+      animation: spin 1.5s linear infinite;
+    }
+
+    .loading-step.done .step-icon {
+      border-color: var(--accent-2);
+      background: var(--accent-2);
+      color: white;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* SIDEBAR */
+    .sidebar {
+      background: var(--surface);
+      overflow-y: auto;
+      padding: 1.5rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }
+
+    .sidebar-section-title {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 0.75rem;
+    }
+
+    /* Pipeline */
+    .pipeline {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .pipeline::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 22px;
+      bottom: 22px;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .p-node {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.55rem 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .p-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-2);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      color: var(--ink-3);
+      flex-shrink: 0;
+    }
+
+    .p-node.active .p-num {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .p-name {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--ink);
+      margin-bottom: 0.1rem;
+    }
+
+    .p-desc {
+      font-size: 0.65rem;
+      color: var(--ink-3);
+      line-height: 1.4;
+    }
+
+    /* History */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .history-item {
+      padding: 0.55rem 0.75rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 0.73rem;
+      color: var(--ink-2);
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item:hover {
+      background: var(--accent-light);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .history-empty {
+      font-size: 0.72rem;
+      color: var(--ink-3);
+      font-style: italic;
+    }
+
+    /* Download */
+    .btn-download {
+      width: 100%;
+      background: transparent;
+      border: 1.5px solid var(--border-2);
+      border-radius: 6px;
+      padding: 0.65rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      color: var(--ink-2);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: none;
+    }
+
+    .btn-download.visible { display: block; }
+    .btn-download:hover { border-color: var(--accent); color: var(--accent); }
+
+    .error-msg {
+      background: #fef2f2;
+      border: 1px solid rgba(185,28,28,0.2);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      font-size: 0.78rem;
+      color: #b91c1c;
+      font-family: var(--mono);
+      display: none;
+    }
+
+    .error-msg.visible { display: block; }
+
+    @media (max-width: 780px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="brand-title">Research <em>Agent</em></div>
+    <div class="brand-meta">LangGraph · Tavily · Claude AI</div>
+  </div>
+  <div class="header-right">
+    <div class="status-dot"></div>
+    sistema activo
+  </div>
+</header>
+
+<div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+
+<div class="layout">
+  <main class="main">
+    <div class="search-area">
+      <label class="search-label" for="inputMsg">¿Sobre qué tema querés investigar?</label>
+      <div class="search-row">
+        <div class="search-wrap">
+          <textarea id="inputMsg" placeholder="Ej: Historia de la inteligencia artificial, impacto del cambio climático, energías renovables..." rows="1"></textarea>
+          <div class="search-hint">Enter para investigar · Shift+Enter para nueva línea</div>
+        </div>
+        <button class="btn-search" id="btnSearch" onclick="investigar()">Investigar →</button>
+      </div>
+    </div>
+
+    <div class="report-area" id="reportArea">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-title">Ingresá un tema para comenzar</div>
+        <div class="empty-sub">El agente va a investigar, analizar y generar un reporte estructurado en segundos.</div>
+      </div>
+
+      <div class="loading-state" id="loadingState">
+        <div class="loading-steps">
+          <div class="loading-step" id="step1">
+            <div class="step-icon">↺</div>
+            <span>Planificando subtemas de investigación...</span>
+          </div>
+          <div class="loading-step" id="step2">
+            <div class="step-icon">↺</div>
+            <span>Buscando información en internet...</span>
+          </div>
+          <div class="loading-step" id="step3">
+            <div class="step-icon">↺</div>
+            <span>Analizando y filtrando resultados...</span>
+          </div>
+          <div class="loading-step" id="step4">
+            <div class="step-icon">↺</div>
+            <span>Redactando el reporte final...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="report-content" id="reportContent">
+        <div class="report-header">
+          <div class="report-topic" id="reportTopic"></div>
+        </div>
+        <div class="report-body" id="reportBody"></div>
+      </div>
+
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+  </main>
+
+  <aside class="sidebar">
+    <div>
+      <div class="sidebar-section-title">Pipeline de agentes</div>
+      <div class="pipeline">
+        <div class="p-node" id="pnode1">
+          <div class="p-num">1</div>
+          <div>
+            <div class="p-name">Planificador</div>
+            <div class="p-desc">Divide el tema en 5 subtemas de investigación</div>
+          </div>
+        </div>
+        <div class="p-node" id="pnode2">
+          <div class="p-num">2</div>
+          <div>
+            <div class="p-name">Buscador</div>
+            <div class="p-desc">Busca información web por cada subtema con Tavily</div>
+          </div>
+        </div>
+        <div class="p-node" id="pnode3">
+          <div class="p-num">3</div>
+          <div>
+            <div class="p-name">Analista</div>
+            <div class="p-desc">Filtra y sintetiza la información relevante</div>
+          </div>
+        </div>
+        <div class="p-node" id="pnode4">
+          <div class="p-num">4</div>
+          <div>
+            <div class="p-name">Redactor</div>
+            <div class="p-desc">Genera el reporte final en Markdown</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-title">Historial de búsquedas</div>
+      <div class="history-list" id="historyList">
+        <div class="history-empty">Sin búsquedas aún</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-title">Exportar</div>
+      <button class="btn-download" id="btnDownload" onclick="descargarReporte()">↓ Descargar reporte (.md)</button>
+    </div>
+  </aside>
+</div>
+
+<script>
+  const API = ''
+  let reporteActual = ''
+  let temaActual = ''
+  let historial = []
+  let stepInterval
+
+  function setLoading(active) {
+    document.getElementById('progressFill').className = active ? 'progress-fill active' : 'progress-fill'
+    document.getElementById('btnSearch').disabled = active
+    document.getElementById('inputMsg').disabled = active
+  }
+
+  function showEmpty() {
+    document.getElementById('emptyState').style.display = 'flex'
+    document.getElementById('loadingState').classList.remove('visible')
+    document.getElementById('reportContent').classList.remove('visible')
+    document.getElementById('errorMsg').classList.remove('visible')
+  }
+
+  function showLoading() {
+    document.getElementById('emptyState').style.display = 'none'
+    document.getElementById('loadingState').classList.add('visible')
+    document.getElementById('reportContent').classList.remove('visible')
+    document.getElementById('errorMsg').classList.remove('visible')
+
+    // Reset steps
+    ;[1,2,3,4].forEach(i => {
+      const el = document.getElementById(`step${i}`)
+      el.classList.remove('active', 'done')
+      el.querySelector('.step-icon').textContent = '↺'
+    })
+    ;[1,2,3,4].forEach(i => document.getElementById(`pnode${i}`).classList.remove('active'))
+
+    let currentStep = 1
+    stepInterval = setInterval(() => {
+      if (currentStep > 1) {
+        const prev = document.getElementById(`step${currentStep - 1}`)
+        prev.classList.remove('active')
+        prev.classList.add('done')
+        prev.querySelector('.step-icon').textContent = '✓'
+        document.getElementById(`pnode${currentStep - 1}`).classList.remove('active')
+      }
+      if (currentStep <= 4) {
+        document.getElementById(`step${currentStep}`).classList.add('active')
+        document.getElementById(`pnode${currentStep}`).classList.add('active')
+        currentStep++
+      }
+    }, 8000)
+  }
+
+  function showReport(reporte, tema) {
+    clearInterval(stepInterval)
+    ;[1,2,3,4].forEach(i => {
+      const el = document.getElementById(`step${i}`)
+      el.classList.remove('active')
+      el.classList.add('done')
+      el.querySelector('.step-icon').textContent = '✓'
+      document.getElementById(`pnode${i}`).classList.remove('active')
+    })
+
+    document.getElementById('loadingState').classList.remove('visible')
+    document.getElementById('reportContent').classList.add('visible')
+    document.getElementById('reportTopic').textContent = tema
+    document.getElementById('reportBody').innerHTML = parseMarkdown(reporte)
+    document.getElementById('btnDownload').classList.add('visible')
+  }
+
+  function showError(msg) {
+    clearInterval(stepInterval)
+    document.getElementById('loadingState').classList.remove('visible')
+    const err = document.getElementById('errorMsg')
+    err.textContent = msg
+    err.classList.add('visible')
+  }
+
+  function parseMarkdown(text) {
+    return text
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code>$1</code>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+      .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+      .replace(/^---$/gm, '<hr>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/^(?!<[hul]|<li|<hr)(.+)$/gm, '<p>$1</p>')
+      .replace(/<p><\/p>/g, '')
+  }
+
+  function agregarHistorial(tema) {
+    historial.unshift(tema)
+    if (historial.length > 8) historial.pop()
+    const list = document.getElementById('historyList')
+    list.innerHTML = historial.map(t => `
+      <div class="history-item" onclick="usarHistorial('${t.replace(/'/g, "\\'")}')">${t}</div>
+    `).join('')
+  }
+
+  function usarHistorial(tema) {
+    document.getElementById('inputMsg').value = tema
+    document.getElementById('inputMsg').focus()
+  }
+
+  function descargarReporte() {
+    if (!reporteActual) return
+    const blob = new Blob([reporteActual], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `reporte_${temaActual.slice(0, 30).replace(/\s+/g, '_')}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function investigar() {
+    const input = document.getElementById('inputMsg')
+    const tema = input.value.trim()
+    if (!tema) return
+
+    temaActual = tema
+    showLoading()
+    setLoading(true)
+
+    try {
+      const res = await fetch(`${API}/analizar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mensaje: tema })
+      })
+
+      if (!res.ok) throw new Error(`Error ${res.status}`)
+      const data = await res.json()
+
+      reporteActual = data.respuesta
+      showReport(data.respuesta, tema)
+      agregarHistorial(tema)
+
+    } catch (e) {
+      showError(`Error al conectar con el servidor. Verificá que esté corriendo. (${e.message})`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  document.getElementById('inputMsg').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      investigar()
+    }
+  })
+
+  document.getElementById('inputMsg').addEventListener('input', function() {
+    this.style.height = '48px'
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px'
+  })
+</script>
+</body>
+</html>
